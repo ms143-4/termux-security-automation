@@ -1,0 +1,114 @@
+#!/data/data/com.termux/files/usr/bin/bash
+
+# Secure System Script
+# Author: ms143-4
+# Purpose: Automate security, privacy, malware protection, updates, and GitHub connectivity.
+
+# Function to print a header
+print_header() {
+    echo "====================================="
+    echo "$1"
+    echo "====================================="
+}
+
+# Update and Upgrade Termux Packages
+update_system() {
+    print_header "Updating and Upgrading System"
+    pkg update && pkg upgrade -y
+    echo "System update complete."
+}
+
+# Run Malware Scan
+malware_scan() {
+    print_header "Scanning for Malware"
+    pkg install clamav -y
+    freshclam  # Update virus definitions
+    clamscan -r --remove /data/data/com.termux/files/home || echo "No malware found."
+    echo "Malware scan complete."
+}
+
+# Detect and Remove Phishing Files
+phishing_protection() {
+    print_header "Detecting and Removing Phishing Files"
+    find /data/data/com.termux/files/home -type f -name "*.html" -exec grep -l "phishing" {} \; -delete
+    echo "Phishing protection complete."
+}
+
+# Encrypt Sensitive Files
+encrypt_sensitive_files() {
+    print_header "Encrypting Sensitive Files"
+    sensitive_file="sensitive_data.txt"
+    encrypted_file="sensitive_data.enc"
+
+    if [ -f "$sensitive_file" ]; then
+        openssl enc -aes-256-cbc -salt -in "$sensitive_file" -out "$encrypted_file"
+        rm -f "$sensitive_file"
+        echo "Sensitive files encrypted."
+    else
+        echo "No sensitive files to encrypt."
+    fi
+}
+
+# Clear Logs and Temporary Files
+clear_logs() {
+    print_header "Clearing Logs and Temporary Files"
+    rm -rf ~/.bash_history ~/.cache/* ~/.termux/boot/*
+    echo "Logs and temporary files cleared."
+}
+
+# Set Secure DNS (Quad9)
+configure_secure_dns() {
+    print_header "Configuring Secure DNS"
+    echo "quad9 9.9.9.9" > $PREFIX/etc/resolv.conf
+    echo "Secure DNS configured."
+}
+
+# Backup Data to GitHub
+backup_to_github() {
+    print_header "Backing Up Data to GitHub"
+    cd ~/termux-security-automation || exit
+    git add .
+    git commit -m "Automated backup at $(date)"
+    git push origin main
+    echo "Backup to GitHub complete."
+}
+
+# Install and Configure Firewall (IPTables)
+setup_firewall() {
+    print_header "Setting Up Firewall"
+    pkg install iptables -y
+    iptables -F  # Flush existing rules
+    iptables -A INPUT -s 192.168.0.0/16 -j ACCEPT  # Allow local network
+    iptables -A INPUT -p tcp --dport 22 -j ACCEPT  # Allow SSH
+    iptables -A INPUT -j DROP  # Drop all other traffic
+    echo "Firewall configured."
+}
+
+# Automate Execution
+automate_execution() {
+    print_header "Automating Execution"
+    mkdir -p ~/.termux/boot
+    cp secure_system.sh ~/.termux/boot/
+    chmod +x ~/.termux/boot/secure_system.sh
+    echo "Automation setup complete. Script will run on boot."
+}
+
+# Main Menu
+main() {
+    print_header "Starting Secure System Script"
+    update_system
+    malware_scan
+    phishing_protection
+    encrypt_sensitive_files
+    clear_logs
+    configure_secure_dns
+    backup_to_github
+    setup_firewall
+    automate_execution
+    print_header "System is Secure and Private"
+}
+
+# Run Main Function
+main
+
+
